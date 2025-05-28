@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.invsys.springboot_inventorysystem.model.Supplier;
 import com.invsys.springboot_inventorysystem.repository.SupplierRepository;
@@ -15,6 +16,7 @@ public class SupplierService {
     @Autowired
     private SupplierRepository supplierRepository;
 
+    @Transactional
     public Supplier createSupplier(Supplier supplier) {
         return supplierRepository.save(supplier);
     }
@@ -27,6 +29,7 @@ public class SupplierService {
         return supplierRepository.findById(id);
     }
 
+    @Transactional
     public Supplier updateSupplier(Long id, Supplier supplierDetails) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Supplier not found with id " + id));
@@ -38,6 +41,7 @@ public class SupplierService {
         return supplierRepository.save(supplier);
     }
 
+    @Transactional
     public void deleteSupplier(Long id) {
         supplierRepository.deleteById(id);
     }

@@ -3,6 +3,8 @@ package com.invsys.springboot_inventorysystem.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.invsys.springboot_inventorysystem.model.Product;
@@ -29,7 +32,8 @@ public class ProductController {
         return new ResponseEntity<>(productService.createProduct(product), HttpStatus.CREATED);
     }
 
-    @GetMapping
+    // Non-paginated GET all
+    @GetMapping("/all")
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
@@ -50,5 +54,47 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // Pagination
+    @GetMapping
+    public ResponseEntity<Page<Product>> getAllProductsPaginated(Pageable pageable) {
+        Page<Product> products = productService.getAllProductsPaginated(pageable);
+        return ResponseEntity.ok(products);
+    } 
+
+    // Filtering
+
+    @GetMapping("/filter/by-name")
+    public ResponseEntity<Page<Product>> getProductsByName(
+            @RequestParam String name, 
+            Pageable pageable) {
+        Page<Product> products = productService.getProductsByName(name, pageable);
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/filter/by-category")
+    public ResponseEntity<Page<Product>> getProductsByCategoryName(
+            @RequestParam String categoryName, 
+            Pageable pageable) {
+        Page<Product> products = productService.getProductsByCategoryName(categoryName, pageable);
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/filter/by-price-range")
+    public ResponseEntity<Page<Product>> getProductsByPriceRange(
+            @RequestParam Double minPrice,
+            @RequestParam Double maxPrice,
+            Pageable pageable) {
+        Page<Product> products = productService.getProductsByPriceRange(minPrice, maxPrice, pageable);
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/filter/by-min-quantity")
+    public ResponseEntity<Page<Product>> getProductsByMinQuantity(
+            @RequestParam Integer minQuantity,
+            Pageable pageable) {
+        Page<Product> products = productService.getProductsByMinQuantity(minQuantity, pageable);
+        return ResponseEntity.ok(products);
     }
 }
