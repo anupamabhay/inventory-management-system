@@ -5,7 +5,9 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,42 +98,60 @@ public class ProductService {
         return productRepository.findAll(pageable);
     }
 
-    // Filtering (Using Specification)
-    public Page<Product> getFilteredProducts(
-            String name,
-            String categoryName,
-            String supplierName,
-            Double minPrice,
-            Double maxPrice,
-            Integer minQuantity,
-            Pageable pageable) {
+    // Filtering (Using Specification with Offset or Keyset)
+    public List<Product> getFilteredProducts(
+        String name,
+        String categoryName,
+        String supplierName,
+        Double minPrice,
+        Double maxPrice,
+        Integer minQuantity,
+        Long lastId,
+        String lastProductName,
+        int pageSize) {
 
-        Specification<Product> spec = Specification.not(null);
+            Specification<Product> spec = Specification.not(null);
 
-        if (name != null && !name.isEmpty())
-            spec = spec.and(ProductSpecification.hasProductName(name));
+            // Offset Pagination Logic
 
-        if (categoryName != null && !categoryName.isEmpty())
-            spec = spec.and(ProductSpecification.hasCategoryName(categoryName));
+            if (name != null && !name.isEmpty())
+                spec = spec.and(ProductSpecification.hasProductName(name));
 
-        if (supplierName != null && !supplierName.isEmpty())
-            spec = spec.and(ProductSpecification.hasSupplierName(supplierName));
+            if (categoryName != null && !categoryName.isEmpty())
+                spec = spec.and(ProductSpecification.hasCategoryName(categoryName));
 
-        if (minPrice != null && maxPrice != null) {
-            spec = spec.and(ProductSpecification.hasPriceBetween(minPrice, maxPrice));
-        } else if (minPrice != null) {
-            spec = spec.and((root, query, criteriaBuilder) -> 
-                    criteriaBuilder.greaterThanOrEqualTo(root.get("price"),
-                    minPrice));
-        } else if (maxPrice != null) {
-            spec = spec.and((root, query, criteriaBuilder) -> 
-                    criteriaBuilder.greaterThanOrEqualTo(root.get("price"), maxPrice));
-        }
+            if (supplierName != null && !supplierName.isEmpty())
+                spec = spec.and(ProductSpecification.hasSupplierName(supplierName));
 
-        if (minQuantity != null)
-            spec = spec.and(ProductSpecification.hasQuantityGreaterThanOrEqualTo(minQuantity));
+            if (minPrice != null && maxPrice != null) {
+                spec = spec.and(ProductSpecification.hasPriceBetween(minPrice, maxPrice));
+            } else if (minPrice != null) {
+                spec = spec.and((root, query, criteriaBuilder) -> 
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("price"),
+                        minPrice));
+            } else if (maxPrice != null) {
+                spec = spec.and((root, query, criteriaBuilder) -> 
+                        criteriaBuilder.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
 
-        return productRepository.findAll(spec, pageable);
+            if (minQuantity != null)
+                spec = spec.and(ProductSpecification.hasQuantityGreaterThanOrEqualTo(minQuantity));
+
+            // Keyset Pagination Logic
+
+            Sort keysetSort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("id"));
+
+            if (lastId != null && lastProductName != null) {
+                spec = spec.and(ProductSpecification.keysetPagination(lastId, lastProductName));
+
+                Pageable keysetPageable = PageRequest.of(0, pageSize, keysetSort);
+
+                return productRepository.findAll(spec, keysetPageable).getContent();
+            } else {
+                Pageable offsetPageable = PageRequest.of(0, pageSize, keysetSort);
+
+                return productRepository.findAll(spec, offsetPageable).getContent();
+            }
     }
 
     // Filtering (Using custom methods)

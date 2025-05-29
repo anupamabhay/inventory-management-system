@@ -3,8 +3,6 @@ package com.invsys.springboot_inventorysystem.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -59,16 +57,18 @@ public class ProductController {
     // Pagination + Filtering using JPA Specifications (Combined)
 
     @GetMapping
-    public ResponseEntity<Page<Product>> getFilteredProducts(
+    public ResponseEntity<List<Product>> getFilteredProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) String supplierName,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Integer minQuantity,
-            Pageable pageable) {
+            @RequestParam(required = false) Long lastId,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(defaultValue = "10") int size) {
         
-        Page<Product> products = productService.getFilteredProducts(name, categoryName, supplierName, minPrice, maxPrice, minQuantity, pageable);
+        List<Product> products = productService.getFilteredProducts(name, categoryName, supplierName, minPrice, maxPrice, minQuantity, lastId, lastName, size);
         return ResponseEntity.ok(products);
     }
 
